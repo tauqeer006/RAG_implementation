@@ -13,7 +13,9 @@ import numpy as np
 from transformers import pipeline
 from huggingface_hub import login
 import pyttsx3
+from dotenv import load_dotenv
 
+load_dotenv()
 
 logging.basicConfig(level=logging.INFO,  format="%(asctime)s - %(levelname)s - %(message)s"
 )
@@ -24,7 +26,7 @@ def compute_Elidian_Distance(x,y):
     
     
 def google_API_embedding():
-    os.environ["Google_API_KEY"] = "AIzaSyBy79jZcC5EhWjed0JWVDTY24KfhnhWeJk"
+    os.environ["Google_API_KEY"] = os.getenv("google_key")
     embedding = GoogleGenerativeAIEmbeddings(model = "models/embedding-001")
     embedding_dim = len(embedding.embed_query("hello world"))
     index = faiss.IndexFlatL2(embedding_dim)

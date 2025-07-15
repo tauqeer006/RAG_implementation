@@ -1,5 +1,6 @@
 from langchain.vectorstores import FAISS
-import os
+import os 
+from dotenv import load_dotenv
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_community.vectorstores import FAISS
 import faiss
@@ -9,7 +10,9 @@ from langchain_community.vectorstores import FAISS
 import numpy as np
 from langchain_groq import ChatGroq
 import logging
+from langchain_huggingface import HuggingFaceEndpointEmbeddings
 
+load_dotenv()
 
 logging.basicConfig(
     level=logging.INFO,
@@ -22,7 +25,7 @@ def compute_Elidian_Distance(x,y):
     
     
 def google_API_embedding():
-    os.environ["Google_API_KEY"] = os.environ("google_key")
+    os.environ["Google_API_KEY"] = os.getenv("google_key")
     embedding = GoogleGenerativeAIEmbeddings(model = "models/embedding-001")
     embedding_dim = len(embedding.embed_query("hello world"))
     index = faiss.IndexFlatL2(embedding_dim)
@@ -32,9 +35,19 @@ def google_API_embedding():
     docstore=InMemoryDocstore(),
     index_to_docstore_id={}, )
     return embedding
+def embedding_model():
+  model = "sentence-transformers/all-mpnet-base-v2"
+  hf = HuggingFaceEndpointEmbeddings(
+    model=model,
+    task="feature-extraction",
+    huggingfacehub_api_token=os.getenv("HF_TOKEN"),
+)
+  return hf
+  
 
 def user_interface():
-   embedding = google_API_embedding()
+   embedding = embedding_model()
+
    returned_vector = FAISS.load_local("faiss_index_dir", embedding , allow_dangerous_deserialization=True)
 
    vector_store_new = returned_vector
@@ -59,7 +72,7 @@ def user_interface():
 
 
 def fine_tuing(document):
-   os.environ["GROQ_API_KEY"] = os.environ("groq_api")
+   os.environ["GROQ_API_KEY"] = os.getenv("groq_api")
    llm = ChatGroq(
     model="deepseek-r1-distill-llama-70b",
     temperature=0,
