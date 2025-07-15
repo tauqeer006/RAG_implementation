@@ -22,7 +22,7 @@ def compute_Elidian_Distance(x,y):
     
     
 def google_API_embedding():
-    os.environ["Google_API_KEY"] = "AIzaSyBy79jZcC5EhWjed0JWVDTY24KfhnhWeJk"
+    os.environ["Google_API_KEY"] = os.environ("google_key")
     embedding = GoogleGenerativeAIEmbeddings(model = "models/embedding-001")
     embedding_dim = len(embedding.embed_query("hello world"))
     index = faiss.IndexFlatL2(embedding_dim)
@@ -59,7 +59,7 @@ def user_interface():
 
 
 def fine_tuing(document):
-   os.environ["GROQ_API_KEY"] = "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"
+   os.environ["GROQ_API_KEY"] = os.environ("groq_api")
    llm = ChatGroq(
     model="deepseek-r1-distill-llama-70b",
     temperature=0,
