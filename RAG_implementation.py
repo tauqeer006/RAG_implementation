@@ -10,8 +10,8 @@ import numpy as np
 from langchain_groq import ChatGroq
 import logging
 
-def logging_setup():
-      logging.basicConfig(
+
+logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
@@ -30,47 +30,47 @@ def google_API_embedding():
     embedding_function=embedding,
     index=index,
     docstore=InMemoryDocstore(),
-    index_to_docstore_id={},
-)
+    index_to_docstore_id={}, )
+    return embedding
 
-returned_vector = FAISS.load_local("faiss_index_dir", embedding , allow_dangerous_deserialization=True)
+def user_interface():
+   embedding = google_API_embedding()
+   returned_vector = FAISS.load_local("faiss_index_dir", embedding , allow_dangerous_deserialization=True)
 
-vector_store_new = returned_vector
-v_index = vector_store_new.index
+   vector_store_new = returned_vector
+   v_index = vector_store_new.index
 
-stored_vectors = v_index.reconstruct_n(0, v_index.ntotal)
+   stored_vectors = v_index.reconstruct_n(0, v_index.ntotal)
+   data = input("Enter the question you want answer:")
+   query_vector = embedding.embed_query(data)
 
-data = input("Enter the question you want answer:")
-query_vector = embedding.embed_query(data)
-
-distances = []
-for stored_vector in stored_vectors:
+   distances = []
+   for stored_vector in stored_vectors:
     distances.append(compute_Elidian_Distance(query_vector , stored_vector))
+   top_index = np.argsort(distances)[:1]
 
-top_index = np.argsort(distances)[:1]
-
-
-for idx in top_index:
+   for idx in top_index:
     doc_id = vector_store_new.index_to_docstore_id[idx]
     document = vector_store_new.docstore._dict[doc_id]
     print("yes")
     logging.info(f"Distance: {distances[idx]}")
-    logging.info("Document Content:\n", document.page_content)
+    #logging.info("Document Content:\n", document.page_content)
+    fine_tuing(document)
 
 
-os.environ["GROQ_API_KEY"] = "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"
-
-    
-llm = ChatGroq(
+def fine_tuing(document):
+   os.environ["GROQ_API_KEY"] = "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"
+   llm = ChatGroq(
     model="deepseek-r1-distill-llama-70b",
     temperature=0,
     max_tokens=100,
     reasoning_format="parsed",
     timeout=None,
-    max_retries=2,
-)
+    max_retries=2,)
+   fine_tuned_message = llm.invoke(document.page_content)
+   only_data =fine_tuned_message.additional_kwargs.get("reasoning_content" ,"")
+   logging.info("After Fine Tuning:")
+   logging.info(only_data)
 
-fine_tuned_message = llm.invoke(document.page_content)
-only_data =fine_tuned_message.additional_kwargs.get("reasoning_content" ,"")
-logging.info("After Fine Tuning:")
-logging.info(only_data)
+if __name__ == "__main__":
+   user_interface()
