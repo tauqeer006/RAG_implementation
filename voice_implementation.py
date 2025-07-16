@@ -46,7 +46,7 @@ def Recording(duration = 5):
     print("Recording completed")
     write(filename ,  sample_rate , audio )
     print("audio is:",audio)
-    speech_to_text(audio)
+    speech_to_text()
 
 def embedding_data():
    embedding = google_API_embedding()
@@ -59,7 +59,7 @@ def embedding_data():
 def speech_to_text():
 
     model = whisper.load_model("small")
-    results = model.transcribe("voice.wav")
+    results = model.transcribe("record.wav")
     print("the text i am getting from speech to text model:",results["text"])
     transcript = results["text"]
     print(" Transcription (first 20 seconds):", transcript)
@@ -80,6 +80,7 @@ def speech_to_text():
      pass_to_llm(document)
 
 def pass_to_llm(document):
+   print("HF_TOKEN from env:", os.getenv("HF_TOKEN")) 
    login(token= os.getenv("HF_TOKEN"))
    pipe = pipeline("text2text-generation", model="google/flan-t5-base", device_map="auto")
    rag_answer = document
