@@ -11,8 +11,9 @@ import numpy as np
 from langchain_groq import ChatGroq
 import logging
 from langchain_huggingface import HuggingFaceEndpointEmbeddings
-
-load_dotenv()
+from transformers import pipeline
+from huggingface_hub import login
+load_dotenv(override=True)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -67,23 +68,25 @@ def user_interface():
     document = vector_store_new.docstore._dict[doc_id]
     print("yes")
     logging.info(f"Distance: {distances[idx]}")
-    #logging.info("Document Content:\n", document.page_content)
+    logging.info(f"Document Content:\n{document.page_content}")
+
     fine_tuing(document)
 
 
 def fine_tuing(document):
-   os.environ["GROQ_API_KEY"] = os.getenv("groq_api")
-   llm = ChatGroq(
-    model="deepseek-r1-distill-llama-70b",
-    temperature=0,
-    max_tokens=100,
-    reasoning_format="parsed",
-    timeout=None,
-    max_retries=2,)
-   fine_tuned_message = llm.invoke(document.page_content)
-   only_data =fine_tuned_message.additional_kwargs.get("reasoning_content" ,"")
-   logging.info("After Fine Tuning:")
-   logging.info(only_data)
-
+   print("HF_TOKEN from env:", os.getenv("HF_TOKEN")) 
+   login(token= os.getenv("HF_TOKEN"))
+   pipe = pipeline("text2text-generation", model="google/flan-t5-base", device_map="auto")
+   rag_answer = document
+   prompt = f"""
+   Instruction: Improve the following answer given  to write in 1  sentence.
+   
+    Answer: {rag_answer}
+   Refined Answer:
+    """
+   response = pipe(prompt, max_new_tokens=150, do_sample=True, temperature=0.7)[0]["generated_text"]
+   print("After fine tuning the text i get the response: ")
+   print(response)
+   
 if __name__ == "__main__":
    user_interface()
